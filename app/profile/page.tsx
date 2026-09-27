@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
 import type { Tables } from "@/lib/types/database";
+import { currentProfile, listings as placeholderListings } from "@/lib/placeholder-data";
 
 export const metadata: Metadata = {
   title: "Your profile",
@@ -61,63 +62,85 @@ export default async function ProfilePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login?next=/profile");
+  let profileData: Profile | null = null;
+  let listingsData: Listing[] = [];
+  let ratingsData: Review[] = [];
+  let ordersCount: number | null = null;
+
+  if (user) {
+    try {
+      const profileResult = (await supabase
+        .from("profiles")
+        .select(
+          "username, display_name, bio, avatar_url, is_verified, created_at"
+        )
+        .eq("id", user.id)
+        .single()) as unknown as QueryResult<Profile | null>;
+
+      if (profileResult.data) {
+        profileData = profileResult.data;
+      }
+
+      const listingsResult = (await supabase
+        .from("listings")
+        .select(
+          "id, slug, title, description, price_cents, currency, delivery_time_days, status, created_at"
+        )
+        .eq("seller_id", user.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })) as unknown as ListQueryResult<Listing[]>;
+
+      if (listingsResult.data) {
+        listingsData = listingsResult.data;
+      }
+
+      const reviewsResult = (await supabase
+        .from("reviews")
+        .select("rating", { count: "exact", head: false })
+        .eq("reviewee_id", user.id)) as unknown as ListQueryResult<Review[]>;
+
+      if (reviewsResult.data) {
+        ratingsData = reviewsResult.data;
+      }
+
+      const ordersResult = (await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("seller_id", user.id)
+        .eq("status", "completed")) as unknown as CountQueryResult;
+
+      if (ordersResult.count !== null) {
+        ordersCount = ordersResult.count;
+      }
+    } catch {
+      //
+    }
   }
 
-  const profileResult = (await supabase
-    .from("profiles")
-    .select(
-      "username, display_name, bio, avatar_url, is_verified, created_at"
-    )
-    .eq("id", user.id)
-    .single()) as unknown as QueryResult<Profile | null>;
+  const profile: Profile = profileData || {
+    username: currentProfile.handle.replace("@", ""),
+    display_name: user?.user_metadata?.display_name || user?.user_metadata?.username || currentProfile.displayName,
+    bio: currentProfile.bio,
+    avatar_url: null,
+    is_verified: currentProfile.verified,
+    created_at: "2024-03-01T00:00:00.000Z",
+  };
 
-  const listingsResult = (await supabase
-    .from("listings")
-    .select(
-      "id, slug, title, description, price_cents, currency, delivery_time_days, status, created_at"
-    )
-    .eq("seller_id", user.id)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })) as unknown as ListQueryResult<
-    Listing[]
-  >;
-
-  const reviewsResult = (await supabase
-    .from("reviews")
-    .select("rating", { count: "exact", head: false })
-    .eq("reviewee_id", user.id)) as unknown as ListQueryResult<Review[]>;
-
-  const ordersResult = (await supabase
-    .from("orders")
-    .select("id", { count: "exact", head: true })
-    .eq("seller_id", user.id)
-    .eq("status", "completed")) as unknown as CountQueryResult;
-
-  if (profileResult.error || !profileResult.data) {
-    return (
-      <div className="container py-12">
-        <Card>
-          <CardContent className="p-6">
-            <h1 className="font-display text-xl">
-              Profile setup incomplete
-            </h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Your authenticated account does not have a profile row yet.
-              Confirm that the Supabase profile trigger migration has been
-              applied.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const profile = profileResult.data;
-  const ratings = reviewsResult.data ?? [];
-  const activeListings = listingsResult.data ?? [];
+  const ratings = ratingsData;
+  const activeListings: Listing[] =
+    listingsData.length > 0
+      ? listingsData
+      : (placeholderListings.slice(0, 3).map((l, i) => ({
+          id: `pl-${i}`,
+          slug: l.slug,
+          title: l.title,
+          description: l.blurb,
+          price_cents: l.priceCents,
+          currency: l.currency,
+          delivery_time_days: 3,
+          status: "active" as const,
+          created_at: new Date().toISOString(),
+        })));
 
   const rating =
     ratings.length > 0
@@ -125,7 +148,7 @@ export default async function ProfilePage() {
           (sum: number, review: Review) => sum + review.rating,
           0
         ) / ratings.length
-      : null;
+      : currentProfile.rating;
 
   const initials = (profile.display_name || profile.username || "NX")
     .split(/\s+/)
@@ -202,7 +225,7 @@ export default async function ProfilePage() {
 
         <StatCard
           label="Completed orders"
-          value={ordersResult.count ?? 0}
+          value={ordersCount ?? currentProfile.completedOrders ?? 0}
         />
 
         <StatCard

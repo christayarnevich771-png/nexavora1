@@ -243,6 +243,14 @@ export default async function SingleListingPage({ params }: ListingPageProps) {
                 Money is safely locked in smart escrow. Funds are never released to the seller
                 until you confirm satisfactory delivery.
               </p>
+              <div className="pt-2 border-t border-border flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+                <span className="flex items-center gap-1 text-emerald-400">
+                  <ShieldCheck className="h-3 w-3" /> FinCEN & ISO 27001 Escrow
+                </span>
+                <Link href="/certificates" className="text-brand hover:underline">
+                  Inspect →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

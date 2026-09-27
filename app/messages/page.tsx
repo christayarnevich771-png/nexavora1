@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
+import { logActivityEvent } from "@/lib/activity-store";
 
 type Message = {
   id: string;
@@ -181,6 +182,18 @@ function MessagesContent() {
         return c;
       })
     );
+
+    logActivityEvent({
+      type: "message",
+      title: `Message Sent to ${activeConv.name}`,
+      description: `“${inputMessage.slice(0, 100)}${inputMessage.length > 100 ? "..." : ""}”`,
+      timestamp: new Date().toISOString(),
+      badgeText: "Sent Message",
+      badgeVariant: "brand",
+      linkHref: `/messages?recipient=${encodeURIComponent(activeConv.name)}`,
+      linkText: "Open Chat",
+      actor: "You",
+    });
 
     setInputMessage("");
   }

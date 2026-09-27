@@ -1,0 +1,7 @@
+{
+  "name": "NEXAVORA",
+  "description": "Buy and sell digital products and services on NEXAVORA with clear order records and dispute support.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

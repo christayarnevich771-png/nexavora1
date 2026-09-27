@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -8,20 +9,13 @@ export type AuthActionState = {
   success?: string;
 };
 
-function getFormData(
-  prevStateOrFormData: AuthActionState | FormData,
-  maybeFormData?: FormData
-): FormData {
-  return maybeFormData ?? (prevStateOrFormData as FormData);
-}
-
 export async function loginAction(
   prevState: AuthActionState,
   formData: FormData
 ): Promise<AuthActionState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/");
+  const next = String(formData.get("next") ?? "/dashboard");
 
   if (!email || !password) {
     return { error: "Email and password are required." };
@@ -38,7 +32,21 @@ export async function loginAction(
     return { error: error.message };
   }
 
-  redirect(next || "/");
+  const cookieStore = await cookies();
+  cookieStore.set(
+    "nx_mock_user",
+    JSON.stringify({
+      id: "usr_mock_101",
+      email,
+      user_metadata: {
+        username: email.split("@")[0],
+        display_name: email.split("@")[0],
+      },
+    }),
+    { path: "/", maxAge: 60 * 60 * 24 * 7 }
+  );
+
+  redirect(next || "/dashboard");
 }
 
 export async function registerAction(
@@ -78,14 +86,21 @@ export async function registerAction(
     return { error: error.message };
   }
 
-  if (data.session) {
-    redirect("/");
-  }
+  const cookieStore = await cookies();
+  cookieStore.set(
+    "nx_mock_user",
+    JSON.stringify({
+      id: data?.user?.id || "usr_mock_101",
+      email,
+      user_metadata: {
+        username,
+        display_name: displayName || username,
+      },
+    }),
+    { path: "/", maxAge: 60 * 60 * 24 * 7 }
+  );
 
-  return {
-    success:
-      "Registration successful. Please check your email to confirm your account.",
-  };
+  redirect("/dashboard");
 }
 
 export async function forgotPasswordAction(
@@ -171,8 +186,10 @@ export async function updatePassword(formData: FormData) {
 }
 
 export async function signOut() {
-  const supabase = await createClient();
+  const cookieStore = await cookies();
+  cookieStore.delete("nx_mock_user");
 
+  const supabase = await createClient();
   await supabase.auth.signOut();
 
   redirect("/");

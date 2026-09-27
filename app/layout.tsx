@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   },
   description:
     "Buy and sell digital products and services on NEXAVORA with clear order records and dispute support.",
+  openGraph: {
+    title: "NEXAVORA — Buy. Sell. Trade. Securely.",
+    description:
+      "Buy and sell digital products and services on NEXAVORA with clear order records and dispute support.",
+  },
 };
 
 export default function RootLayout({

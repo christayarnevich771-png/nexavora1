@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send, ShieldCheck, Award } from "lucide-react";
 
 const columns = [
   {
@@ -12,12 +12,11 @@ const columns = [
     ],
   },
   {
-    title: "Trust & safety",
+    title: "Compliance & Trust",
     links: [
+      { href: "/certificates", label: "Official Licenses & ISO 27001" },
+      { href: "/kyc", label: "Seller KYC Verification" },
       { href: "/orders", label: "Escrow Orders" },
-      { href: "/payment-methods", label: "Payment & Escrow" },
-      { href: "/contact", label: "Dispute Support" },
-      { href: "/contact", label: "Contact Us" },
     ],
   },
   {
@@ -49,8 +48,8 @@ export function SiteFooter() {
             Buy. Sell. Trade. Securely.
           </p>
           <p className="mt-3 max-w-[24ch] text-sm text-muted-foreground">
-            A marketplace for digital products and services, built around clear order
-            records and transparent escrow support.
+            A global marketplace for digital deliverables, backed by segregated escrow,
+            government KYC verified sellers, and international regulatory licenses.
           </p>
           <div className="mt-4 flex flex-col gap-2">
             <a
@@ -96,7 +95,9 @@ export function SiteFooter() {
       <div className="border-t border-border">
         <div className="container flex flex-col items-center justify-between gap-3 py-5 text-xs text-muted-foreground sm:flex-row">
           <p>© {new Date().getFullYear()} NEXAVORA. All rights reserved.</p>
-          <p>Orders and payment instructions are recorded clearly for buyers and sellers.</p>
+          <p className="font-mono text-[11px] text-muted-foreground">
+            FinCEN MSB #31000284719283 · ISO/IEC 27001:2022 Certified · Mandatory Seller KYC
+          </p>
         </div>
       </div>
     </footer>

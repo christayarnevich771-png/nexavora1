@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { OrderStatusBadge } from "../page";
 import { formatPrice } from "@/lib/utils";
+import { logActivityEvent } from "@/lib/activity-store";
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -49,17 +50,50 @@ export default function OrderDetailPage() {
     e.preventDefault();
     if (!txid.trim()) return;
     setStatus("in_progress");
+    logActivityEvent({
+      type: "order_status",
+      title: `Deposit Submitted for Order #${orderId.toUpperCase()}`,
+      description: `Blockchain transaction hash submitted: ${txid.slice(0, 16)}... Escrow custody active.`,
+      timestamp: new Date().toISOString(),
+      badgeText: "Deposit Pending",
+      badgeVariant: "brand",
+      linkHref: `/orders/${orderId}`,
+      linkText: "View Order",
+      actor: "You (Buyer)",
+    });
     setMessage("Payment submitted for verification. Escrow will lock upon 1 blockchain confirmation.");
   }
 
   function handleDeliverWork(e: React.FormEvent) {
     e.preventDefault();
     setStatus("delivered");
+    logActivityEvent({
+      type: "order_status",
+      title: `Deliverables Uploaded for Order #${orderId.toUpperCase()}`,
+      description: deliveryNote ? `Delivery note: “${deliveryNote}”` : "Seller submitted project assets for approval.",
+      timestamp: new Date().toISOString(),
+      badgeText: "Delivered",
+      badgeVariant: "brand",
+      linkHref: `/orders/${orderId}`,
+      linkText: "Review Files",
+      actor: "Seller",
+    });
     setMessage("Work marked as delivered. Buyer has 72 hours to verify deliverables.");
   }
 
   function handleReleaseFunds() {
     setStatus("completed");
+    logActivityEvent({
+      type: "order_status",
+      title: `Order #${orderId.toUpperCase()} Approved & Completed`,
+      description: "Buyer approved work quality. Escrow released payment directly to seller balance.",
+      timestamp: new Date().toISOString(),
+      badgeText: "Completed",
+      badgeVariant: "success",
+      linkHref: `/orders/${orderId}`,
+      linkText: "View Receipt",
+      actor: "Escrow Smart Release",
+    });
     setMessage("Funds released to seller! Order successfully completed.");
   }
 
@@ -67,6 +101,17 @@ export default function OrderDetailPage() {
     e.preventDefault();
     setStatus("disputed");
     setShowDisputeModal(false);
+    logActivityEvent({
+      type: "order_status",
+      title: `Dispute Case Opened: Order #${orderId.toUpperCase()}`,
+      description: disputeReason ? `Grounds: “${disputeReason}”` : "Arbitration requested. Escrow funds placed in legal lock.",
+      timestamp: new Date().toISOString(),
+      badgeText: "Disputed",
+      badgeVariant: "destructive",
+      linkHref: `/orders/${orderId}`,
+      linkText: "Arbitration Case",
+      actor: "Buyer Dispute Desk",
+    });
     setMessage("Dispute ticket opened. NEXAVORA arbitrator is reviewing communication logs.");
   }
 

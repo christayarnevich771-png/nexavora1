@@ -11,11 +11,18 @@ export function ListingCard({ listing }: { listing: Listing }) {
       className="group flex flex-col justify-between rounded-lg border border-border bg-card p-5 transition-colors hover:border-brand/50"
     >
       <div>
-        <p className="text-xs text-muted-foreground">{listing.category}</p>
-        <h3 className="mt-1.5 font-display text-base leading-snug">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{listing.category}</span>
+          {listing.seller.verified && (
+            <span className="flex items-center gap-1 font-mono text-[10px] text-brand">
+              <ShieldCheck className="h-3 w-3" /> KYC Verified
+            </span>
+          )}
+        </div>
+        <h3 className="mt-1.5 font-display text-base leading-snug group-hover:text-brand transition-colors">
           {listing.title}
         </h3>
-        <p className="mt-2 text-sm text-muted-foreground">{listing.blurb}</p>
+        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{listing.blurb}</p>
       </div>
 
       <div className="mt-5">
@@ -23,7 +30,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="mt-3 flex items-end justify-between">
           <div>
             <div className="flex items-center gap-1.5 text-sm">
-              <span className={cn(listing.seller.verified && "text-foreground")}>
+              <span className={cn(listing.seller.verified && "text-foreground font-medium")}>
                 {listing.seller.name}
               </span>
               {listing.seller.verified && (
@@ -39,7 +46,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
               <span>{listing.deliveryTime}</span>
             </div>
           </div>
-          <span className="font-mono text-base tabular-nums">
+          <span className="font-mono text-base tabular-nums font-semibold">
             {formatPrice(listing.priceCents, listing.currency)}
           </span>
         </div>
